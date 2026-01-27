@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter, Clock, Users, ChevronRight, Utensils, Trash2, Award, Tag, X } from 'lucide-react';
 import RecipeForm from '../components/recipes/RecipeForm';
@@ -13,7 +14,7 @@ const Recipes = () => {
 
     const fetchRecipes = () => {
         setLoading(true);
-        fetch('http://localhost:3001/api/recipes')
+        fetch('${API_BASE_URL}/api/recipes')
             .then(res => res.json())
             .then(data => {
                 setRecipes(Array.isArray(data) ? data : []);
@@ -31,7 +32,7 @@ const Recipes = () => {
 
     const handleSaveRecipe = (recipeData, id) => {
         const method = id ? 'PUT' : 'POST';
-        const url = id ? `http://localhost:3001/api/recipes/${id}` : 'http://localhost:3001/api/recipes';
+        const url = id ? `${API_BASE_URL}/api/recipes/${id}` : '${API_BASE_URL}/api/recipes';
 
         fetch(url, {
             method,
@@ -50,7 +51,7 @@ const Recipes = () => {
     const handleDeleteRecipe = (id, e) => {
         e.stopPropagation();
         if (window.confirm('Supprimer cette recette ?')) {
-            fetch(`http://localhost:3001/api/recipes/${id}`, { method: 'DELETE' })
+            fetch(`${API_BASE_URL}/api/recipes/${id}`, { method: 'DELETE' })
                 .then(() => fetchRecipes())
                 .catch(err => console.error(err));
         }

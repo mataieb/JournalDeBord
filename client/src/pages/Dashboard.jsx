@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import { Activity, Droplets, Flame, Brain, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 
@@ -21,7 +22,7 @@ const Dashboard = () => {
     const fetchToday = async () => {
         try {
             const today = new Date().toISOString().split('T')[0];
-            const res = await fetch(`http://localhost:3001/api/log/${today}`);
+            const res = await fetch(`${API_BASE_URL}/api/log/${today}`);
             const data = await res.json();
 
             const calories = data.foods.reduce((acc, item) => acc + (item.calories || 0), 0);
@@ -37,7 +38,7 @@ const Dashboard = () => {
         try {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth() + 1;
-            const res = await fetch(`http://localhost:3001/api/log/month/${year}/${month}`);
+            const res = await fetch(`${API_BASE_URL}/api/log/month/${year}/${month}`);
             const data = await res.json();
             setMonthData(data);
         } catch (err) { console.error(err); }

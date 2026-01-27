@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import { Plus, Trash2, Save, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const Journal = () => {
@@ -45,7 +46,7 @@ const Journal = () => {
         if (!name) return;
 
         try {
-            const res = await fetch('http://localhost:3001/api/recipes/assemble', {
+            const res = await fetch('${API_BASE_URL}/api/recipes/assemble', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -76,7 +77,7 @@ const Journal = () => {
 
     const fetchRecipes = async () => {
         try {
-            const res = await fetch('http://localhost:3001/api/recipes');
+            const res = await fetch('${API_BASE_URL}/api/recipes');
             const data = await res.json();
             setRecipes(Array.isArray(data) ? data : []);
         } catch (err) {
@@ -87,7 +88,7 @@ const Journal = () => {
     const fetchLog = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`http://localhost:3001/api/log/${date}`);
+            const res = await fetch(`${API_BASE_URL}/api/log/${date}`);
             const data = await res.json();
             setLog(data);
         } catch (err) {
@@ -99,7 +100,7 @@ const Journal = () => {
 
     const addItem = async (type, data) => {
         try {
-            const res = await fetch('http://localhost:3001/api/log/item', {
+            const res = await fetch('${API_BASE_URL}/api/log/item', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type, data, date })
@@ -114,7 +115,7 @@ const Journal = () => {
 
     const updateStool = async (id, data) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/log/stool/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/log/stool/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -126,7 +127,7 @@ const Journal = () => {
     const deleteStool = async (id) => {
         if (!window.confirm("Supprimer cette entrée ?")) return;
         try {
-            const res = await fetch(`http://localhost:3001/api/log/stool/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/log/stool/${id}`, {
                 method: 'DELETE'
             });
             if (res.ok) fetchLog();
@@ -135,7 +136,7 @@ const Journal = () => {
 
     const updateFood = async (id, data) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/log/food/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/log/food/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -146,14 +147,14 @@ const Journal = () => {
     const deleteFood = async (id) => {
         if (!window.confirm("Supprimer ?")) return;
         try {
-            const res = await fetch(`http://localhost:3001/api/log/food/${id}`, { method: 'DELETE' });
+            const res = await fetch(`${API_BASE_URL}/api/log/food/${id}`, { method: 'DELETE' });
             if (res.ok) fetchLog();
         } catch (err) { console.error(err); }
     };
 
     const updateDrink = async (id, data) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/log/drink/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/log/drink/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -164,14 +165,14 @@ const Journal = () => {
     const deleteDrink = async (id) => {
         if (!window.confirm("Supprimer ?")) return;
         try {
-            const res = await fetch(`http://localhost:3001/api/log/drink/${id}`, { method: 'DELETE' });
+            const res = await fetch(`${API_BASE_URL}/api/log/drink/${id}`, { method: 'DELETE' });
             if (res.ok) fetchLog();
         } catch (err) { console.error(err); }
     };
 
     const updateExercise = async (id, data) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/log/exercise/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/log/exercise/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -182,14 +183,14 @@ const Journal = () => {
     const deleteExercise = async (id) => {
         if (!window.confirm("Supprimer cette activité ?")) return;
         try {
-            const res = await fetch(`http://localhost:3001/api/log/exercise/${id}`, { method: 'DELETE' });
+            const res = await fetch(`${API_BASE_URL}/api/log/exercise/${id}`, { method: 'DELETE' });
             if (res.ok) fetchLog();
         } catch (err) { console.error(err); }
     };
 
     const updateHabit = async (id, data) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/log/habit/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/log/habit/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -200,7 +201,7 @@ const Journal = () => {
     const deleteHabit = async (id) => {
         if (!window.confirm("Supprimer cette habitude ?")) return;
         try {
-            const res = await fetch(`http://localhost:3001/api/log/habit/${id}`, { method: 'DELETE' });
+            const res = await fetch(`${API_BASE_URL}/api/log/habit/${id}`, { method: 'DELETE' });
             if (res.ok) fetchLog();
         } catch (err) { console.error(err); }
     };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_BASE_URL } from '../../config';
 import { Plus, Trash2, X, PlusCircle, Users, Clock, Award, GripVertical, Utensils, BookOpen, Tag } from 'lucide-react';
 
 const RecipeForm = ({ recipe, onSave, onCancel }) => {
@@ -47,13 +48,13 @@ const RecipeForm = ({ recipe, onSave, onCancel }) => {
 
     useEffect(() => {
         // Fetch ingredients
-        fetch('http://localhost:3001/api/recipes/ingredients/list')
+        fetch('${API_BASE_URL}/api/recipes/ingredients/list')
             .then(res => res.json())
             .then(data => setAvailableIngredients(data))
             .catch(err => console.error(err));
 
         // Fetch recipes for nested suggestions
-        fetch('http://localhost:3001/api/recipes')
+        fetch('${API_BASE_URL}/api/recipes')
             .then(res => res.json())
             .then(data => setAvailableRecipes(data))
             .catch(err => console.error(err));
@@ -185,7 +186,7 @@ const RecipeForm = ({ recipe, onSave, onCancel }) => {
 
         setUploading(true);
         try {
-            const res = await fetch('http://localhost:3001/api/upload', {
+            const res = await fetch('${API_BASE_URL}/api/upload', {
                 method: 'POST',
                 body: formData
             });

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import { Search, Edit2, Trash2, Merge, Save, X, Check, ArrowRight } from 'lucide-react';
 
 const UNITS = ['g', 'kg', 'mL', 'L', 'pièce', 'c.a.c', 'c.a.s', 'portion', 'paquet', 'Aucune'];
@@ -20,7 +21,7 @@ const Ingredients = () => {
 
     const fetchIngredients = () => {
         setLoading(true);
-        fetch('http://localhost:3001/api/recipes/ingredients/list')
+        fetch('${API_BASE_URL}/api/recipes/ingredients/list')
             .then(res => res.json())
             .then(data => {
                 setIngredients(data);
@@ -45,7 +46,7 @@ const Ingredients = () => {
         if (!confirm("Voulez-vous vraiment supprimer cet ingrédient ?")) return;
 
         try {
-            const res = await fetch(`http://localhost:3001/api/recipes/ingredients/${id}`, {
+            const res = await fetch(`${API_BASE_URL}/api/recipes/ingredients/${id}`, {
                 method: 'DELETE'
             });
 
@@ -72,7 +73,7 @@ const Ingredients = () => {
     };
 
     const saveEdit = () => {
-        fetch(`http://localhost:3001/api/recipes/ingredients/${editingId}`, {
+        fetch(`${API_BASE_URL}/api/recipes/ingredients/${editingId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(editForm)
@@ -99,7 +100,7 @@ const Ingredients = () => {
 
         if (!window.confirm("Êtes-vous sûr ? L'ingrédient non sélectionné sera supprimé et remplacé par le sélectionné dans toutes les recettes.")) return;
 
-        fetch('http://localhost:3001/api/recipes/ingredients/merge', {
+        fetch('${API_BASE_URL}/api/recipes/ingredients/merge', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sourceId, targetId })
