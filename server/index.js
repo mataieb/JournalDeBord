@@ -27,7 +27,8 @@ app.use('/api/upload', uploadRoutes);
 const frontendPath = path.join(__dirname, '../client/dist');
 if (fs.existsSync(frontendPath)) {
     app.use(express.static(frontendPath));
-    app.get('*', (req, res) => {
+    // Express 5: use regex or (.*) instead of *
+    app.get(/(.*)/, (req, res) => {
         res.sendFile(path.join(frontendPath, 'index.html'));
     });
 }
