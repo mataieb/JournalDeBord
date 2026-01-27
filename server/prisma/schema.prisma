@@ -1,0 +1,196 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  logs      DayLog[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DayLog {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @default(now()) 
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  
+  foods     FoodItem[]
+  drinks    DrinkItem[]
+  habits    HabitItem[]
+  exercises Exercise[]
+  gutHealth GutHealth? 
+  sleep     Sleep?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([date, userId])
+}
+
+model Sleep {
+  id          Int      @id @default(autoincrement())
+  bedtime     DateTime?
+  waketime    DateTime?
+  score       Int?      // 0-100
+  quality     Int?      // 1-5
+  dayLogId    Int       @unique
+  dayLog      DayLog    @relation(fields: [dayLogId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model FoodItem {
+  id        Int      @id @default(autoincrement())
+  name      String
+  quantity  String?  
+  calories  Int?
+  category  String?  
+  time      DateTime? 
+  dayLogId  Int
+  dayLog    DayLog   @relation(fields: [dayLogId], references: [id])
+  
+  // Link to Recipe
+  recipeId  Int?
+  recipe    Recipe?   @relation(fields: [recipeId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DrinkItem {
+  id        Int      @id @default(autoincrement())
+  name      String
+  type      String?  
+  period    String?  
+  volumeMl  Int?
+  time      DateTime?
+  dayLogId  Int
+  dayLog    DayLog   @relation(fields: [dayLogId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model HabitItem {
+  id        Int      @id @default(autoincrement())
+  name      String   
+  category  String?  
+  quantity  Int?     
+  time      DateTime?
+  dayLogId  Int
+  dayLog    DayLog   @relation(fields: [dayLogId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Exercise {
+  id        Int      @id @default(autoincrement())
+  name      String?
+  type      String
+  durationMin Int
+  intensity String?  
+  dayLogId  Int
+  dayLog    DayLog   @relation(fields: [dayLogId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GutHealth {
+  id         Int          @id @default(autoincrement())
+  dailyScore Int?         @default(3)
+  symptoms   String?      
+  stoolType  Int?         
+  notes      String?
+  dayLogId   Int          @unique
+  dayLog     DayLog       @relation(fields: [dayLogId], references: [id])
+  stools     StoolEntry[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+model StoolEntry {
+  id          Int       @id @default(autoincrement())
+  time        DateTime 
+  bristolType Int 
+  notes       String?
+  gutHealthId Int
+  gutHealth   GutHealth @relation(fields: [gutHealthId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// --- Recipe Book Module ---
+
+model Recipe {
+  id           Int      @id @default(autoincrement())
+  name         String
+  description  String?
+  urlPhoto     String?
+  servings     Int?     @default(1)
+  prepTime     Int?     // in minutes
+  cookTime     Int?     // in minutes
+  complexity   Int?     // 1 to 10
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  isDraft      Boolean  @default(false)
+  type         String   @default("RECIPE") // "RECIPE" or "ASSEMBLY"
+
+  steps        Step[]
+  ingredients  RecipeIngredient[] @relation("ParentRecipe")
+  usedInRecipes RecipeIngredient[] @relation("IncludedRecipe")
+  tags         Tag[]
+  foodItems    FoodItem[] // Back-relation to FoodItem logs
+}
+
+model Step {
+  id          Int      @id @default(autoincrement())
+  order       Int
+  description String
+  recipeId    Int
+  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+}
+
+model Ingredient {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  type        Int?     // Match Java Enum
+  uniteMesure String?
+  calories    Int?     @default(0)
+  saison      Int?     
+  
+  recipeIngredients RecipeIngredient[]
+  tags              Tag[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model RecipeIngredient {
+  id           Int      @id @default(autoincrement())
+  recipeId     Int
+  recipe       Recipe   @relation("ParentRecipe", fields: [recipeId], references: [id], onDelete: Cascade)
+  
+  ingredientId Int?
+  ingredient   Ingredient? @relation(fields: [ingredientId], references: [id])
+
+  subRecipeId  Int?
+  subRecipe    Recipe?     @relation("IncludedRecipe", fields: [subRecipeId], references: [id])
+  
+  quantity     Float
+  unit         String?   // Weight/Unit in the recipe context
+}
+
+model Tag {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  recipes     Recipe[]
+  ingredients Ingredient[]
+}
