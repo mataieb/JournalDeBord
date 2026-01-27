@@ -27,6 +27,8 @@ RUN npm ci
 COPY server/ ./
 
 # 3. Prisma Setup
+# 3. Prisma Setup
+ENV DATABASE_URL="file:./dev.db"
 RUN npx prisma generate
 
 # 4. Expose and Run
