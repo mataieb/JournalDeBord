@@ -4,8 +4,12 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
+// Use environment variable for upload dir, or default to local folder
+// In production with 1 volume at /data, we should put uploads in /data/uploads
+const STORAGE_ROOT = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.STORAGE_ROOT || path.join(__dirname, '../');
+const uploadDir = path.join(STORAGE_ROOT, 'uploads');
+
 // Ensure uploads directory exists
-const uploadDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }

@@ -15,8 +15,13 @@ const path = require('path');
 
 app.use(cors());
 app.use(express.json());
+
+// Determine storage root similar to upload route
+const STORAGE_ROOT = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.STORAGE_ROOT || path.join(__dirname, 'uploads/..');
+const uploadDir = path.join(STORAGE_ROOT, 'uploads');
+
 // Serve static files from 'uploads' directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadDir));
 
 app.use('/api/log', logRoutes);
 app.use('/api/recipes', recipeRoutes);
