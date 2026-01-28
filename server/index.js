@@ -11,6 +11,7 @@ const logRoutes = require('./routes/log');
 const recipeRoutes = require('./routes/recipes');
 
 const uploadRoutes = require('./routes/upload');
+const adminRoutes = require('./routes/admin');
 const path = require('path');
 
 app.use(cors());
@@ -26,6 +27,7 @@ app.use('/uploads', express.static(uploadDir));
 app.use('/api/log', logRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/admin', adminRoutes);
 
 // SERVE FRONTEND (Production)
 // Adjust path if needed. Assuming client build is in ../client/dist
