@@ -86,20 +86,23 @@ router.post('/import', async (req, res) => {
                                 create: r.ingredients?.map(ri => {
                                     // Try to find the ingredient name from the ID in the backup
                                     // Or assume the backup 'ri' has the ingredient name populated if it was a deep fetch. 
-                                    // Since our export was shallow on some levels, let's rely on name matching if possible, 
-                                    // or ingredientId mapping from the just-imported ingredients.
-                                    // Simpler approach: Assume export data structure from export_db.js
+                                    // The export_db script does include: ingredients: await prisma.recipe.findMany({ include: { ingredients: true } }) 
+                                    // BUT ingredients on RecipeIngredient is a relation. The simple JSON export might just have ingredientId.
+                                    // We'll try to find by ID in our list of ingredients imported in Step 1
 
-                                    // Wait, the export_db.js does not include 'ingredient' object inside RecipeIngredient, only ingredientId.
-                                    // We need to look it up in data.ingredients list.
-                                    const ingName = data.ingredients.find(i => i.id === ri.ingredientId)?.name;
+                                    // Actually, export_db.js does: recipes: await prisma.recipe.findMany({ include: { ..., ingredients: true } })
+                                    // Prisms includes relations objects if requested. The export_db script did NOT include 'ingredient' relations inside 'ingredients'.
+                                    // It only did: ingredients: await prisma.ingredient.findMany(...) separately.
+                                    // So 'ri' in 'r.ingredients' ONLY has 'ingredientId'.
+                                    // We need to look up the Name of that ingredient ID from the backup data.ingredients list.
 
-                                    if (!ingName) return null; // Skip broken links
+                                    const ingDef = data.ingredients.find(i => i.id === ri.ingredientId);
+                                    if (!ingDef) return null; // Skip if source ingredient missing
 
                                     return {
                                         quantity: ri.quantity,
                                         unit: ri.unit,
-                                        ingredient: { connect: { name: ingName } }
+                                        ingredient: { connect: { name: ingDef.name } }
                                     };
                                 }).filter(x => x !== null) || []
                             }
@@ -109,6 +112,84 @@ router.post('/import', async (req, res) => {
                 }
             }
         }
+
+        // 3. Import Day Logs (Journal)
+        if (data.dayLogs) {
+            // We need a user to attach logs to. For now, take the first one or create default
+            let user = await prisma.user.findFirst();
+            if (!user && data.users && data.users.length > 0) {
+                user = await prisma.user.create({ data: { email: data.users[0].email, name: data.users[0].name || 'User' } });
+            }
+
+            if (user) {
+                for (const log of data.dayLogs) {
+                    // Create or update log for that date
+                    const dateStr = new Date(log.date).toISOString(); // Ensure format
+
+                    const existingLog = await prisma.dayLog.findFirst({
+                        where: { userId: user.id, date: dateStr }
+                    });
+
+                    // If log exists, we might want to skip or merge. Let's skip to be safe against dups
+                    if (existingLog) continue;
+
+                    await prisma.dayLog.create({
+                        data: {
+                            date: dateStr,
+                            userId: user.id,
+                            foods: {
+                                create: log.foods?.map(f => {
+                                    let recipeConnect = undefined;
+                                    if (f.recipeId) {
+                                        // Try to find the recipe in backup to get its name, then connect by name in DB
+                                        const rDef = data.recipes?.find(r => r.id === f.recipeId);
+                                        if (rDef) recipeConnect = { connect: { name: rDef.name } }; // Assuming unique names
+                                    }
+                                    return {
+                                        name: f.name,
+                                        category: f.category,
+                                        calories: f.calories,
+                                        recipe: recipeConnect
+                                    };
+                                })
+                            },
+                            drinks: {
+                                create: log.drinks?.map(d => ({ name: d.name, type: d.type, period: d.period }))
+                            },
+                            habits: {
+                                create: log.habits?.map(h => ({ name: h.name, category: h.category }))
+                            },
+                            exercises: {
+                                create: log.exercises?.map(e => ({ name: e.name, type: e.type, durationMin: e.durationMin }))
+                            },
+                            sleep: log.sleep ? {
+                                create: {
+                                    bedtime: log.sleep.bedtime,
+                                    waketime: log.sleep.waketime,
+                                    durationMin: log.sleep.durationMin,
+                                    score: log.sleep.score,
+                                    quality: log.sleep.quality
+                                }
+                            } : undefined,
+                            gutHealth: log.gutHealth ? {
+                                create: {
+                                    dailyScore: log.gutHealth.dailyScore,
+                                    symptoms: log.gutHealth.symptoms,
+                                    stools: {
+                                        create: log.gutHealth.stools?.map(s => ({
+                                            time: s.time,
+                                            bristolType: s.bristolType,
+                                            notes: s.notes
+                                        }))
+                                    }
+                                }
+                            } : undefined
+                        }
+                    });
+                }
+            }
+        }
+
 
         res.json({ message: "Import successful", stats });
     } catch (e) {

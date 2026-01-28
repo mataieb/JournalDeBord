@@ -57,9 +57,20 @@ const Recipes = () => {
         }
     };
 
-    const openEditForm = (recipe) => {
-        setEditingRecipe(recipe);
-        setShowForm(true);
+    const openEditForm = async (recipe) => {
+        setLoading(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/recipes/${recipe.id}`);
+            if (!res.ok) throw new Error('Failed to fetch details');
+            const fullRecipe = await res.json();
+            setEditingRecipe(fullRecipe);
+            setShowForm(true);
+        } catch (err) {
+            console.error(err);
+            alert("Impossible de charger les détails de la recette.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const filteredRecipes = recipes.filter(r => {

@@ -4,18 +4,22 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 // GET all recipes
+// GET all recipes
 router.get('/', async (req, res, next) => {
     try {
         const recipes = await prisma.recipe.findMany({
-            include: {
-                tags: true,
-                ingredients: {
-                    include: {
-                        ingredient: true,
-                        subRecipe: true
-                    }
-                },
-                steps: true
+            select: {
+                id: true,
+                name: true,
+                description: true,
+                urlPhoto: true,
+                complexity: true,
+                prepTime: true,
+                cookTime: true,
+                servings: true,
+                isDraft: true,
+                type: true,
+                tags: true
             },
             orderBy: { name: 'asc' }
         });
