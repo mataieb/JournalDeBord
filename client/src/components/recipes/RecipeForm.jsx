@@ -48,13 +48,13 @@ const RecipeForm = ({ recipe, onSave, onCancel }) => {
 
     useEffect(() => {
         // Fetch ingredients
-        fetch('${API_BASE_URL}/api/recipes/ingredients/list')
+        fetch(`${API_BASE_URL}/api/recipes/ingredients/list`)
             .then(res => res.json())
             .then(data => setAvailableIngredients(data))
             .catch(err => console.error(err));
 
         // Fetch recipes for nested suggestions
-        fetch('${API_BASE_URL}/api/recipes')
+        fetch(`${API_BASE_URL}/api/recipes`)
             .then(res => res.json())
             .then(data => setAvailableRecipes(data))
             .catch(err => console.error(err));
@@ -186,7 +186,7 @@ const RecipeForm = ({ recipe, onSave, onCancel }) => {
 
         setUploading(true);
         try {
-            const res = await fetch('${API_BASE_URL}/api/upload', {
+            const res = await fetch(`${API_BASE_URL}/api/upload`, {
                 method: 'POST',
                 body: formData
             });

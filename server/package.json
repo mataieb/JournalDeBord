@@ -17,6 +17,7 @@
     "@prisma/client": "^6.19.1",
     "cors": "^2.8.5",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
     "fs": "^0.0.1-security",
     "multer": "^2.0.2",
     "prisma": "^6.19.1"

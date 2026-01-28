@@ -21,7 +21,7 @@ const Ingredients = () => {
 
     const fetchIngredients = () => {
         setLoading(true);
-        fetch('${API_BASE_URL}/api/recipes/ingredients/list')
+        fetch(`${API_BASE_URL}/api/recipes/ingredients/list`)
             .then(res => res.json())
             .then(data => {
                 setIngredients(data);
@@ -100,7 +100,7 @@ const Ingredients = () => {
 
         if (!window.confirm("Êtes-vous sûr ? L'ingrédient non sélectionné sera supprimé et remplacé par le sélectionné dans toutes les recettes.")) return;
 
-        fetch('${API_BASE_URL}/api/recipes/ingredients/merge', {
+        fetch(`${API_BASE_URL}/api/recipes/ingredients/merge`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sourceId, targetId })

@@ -46,7 +46,7 @@ const Journal = () => {
         if (!name) return;
 
         try {
-            const res = await fetch('${API_BASE_URL}/api/recipes/assemble', {
+            const res = await fetch(`${API_BASE_URL}/api/recipes/assemble`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -77,7 +77,7 @@ const Journal = () => {
 
     const fetchRecipes = async () => {
         try {
-            const res = await fetch('${API_BASE_URL}/api/recipes');
+            const res = await fetch(`${API_BASE_URL}/api/recipes`);
             const data = await res.json();
             setRecipes(Array.isArray(data) ? data : []);
         } catch (err) {
@@ -100,7 +100,7 @@ const Journal = () => {
 
     const addItem = async (type, data) => {
         try {
-            const res = await fetch('${API_BASE_URL}/api/log/item', {
+            const res = await fetch(`${API_BASE_URL}/api/log/item`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ type, data, date })

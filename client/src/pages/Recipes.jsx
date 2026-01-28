@@ -14,7 +14,7 @@ const Recipes = () => {
 
     const fetchRecipes = () => {
         setLoading(true);
-        fetch('${API_BASE_URL}/api/recipes')
+        fetch(`${API_BASE_URL}/api/recipes`)
             .then(res => res.json())
             .then(data => {
                 setRecipes(Array.isArray(data) ? data : []);
@@ -32,7 +32,7 @@ const Recipes = () => {
 
     const handleSaveRecipe = (recipeData, id) => {
         const method = id ? 'PUT' : 'POST';
-        const url = id ? `${API_BASE_URL}/api/recipes/${id}` : '${API_BASE_URL}/api/recipes';
+        const url = id ? `${API_BASE_URL}/api/recipes/${id}` : `${API_BASE_URL}/api/recipes`;
 
         fetch(url, {
             method,
