@@ -114,6 +114,13 @@ router.post('/import', async (req, res) => {
         }
 
         // 3. Import Day Logs (Journal)
+        // Pre-fetch all recipes to build a map. Needed because 'name' is not unique in prisma schema for 'connect'.
+        // We will map BackupID -> Name -> NewID
+        const allRecipes = await prisma.recipe.findMany({ select: { id: true, name: true } });
+        const recipeNameMap = new Map();
+        allRecipes.forEach(r => recipeNameMap.set(r.name, r.id));
+
+        // 3. Import Day Logs (Journal)
         if (data.dayLogs) {
             // We need a user to attach logs to. For now, take the first one or create default
             let user = await prisma.user.findFirst();
@@ -141,9 +148,15 @@ router.post('/import', async (req, res) => {
                                 create: log.foods?.map(f => {
                                     let recipeConnect = undefined;
                                     if (f.recipeId) {
-                                        // Try to find the recipe in backup to get its name, then connect by name in DB
+                                        // Try to find the recipe in backup to get its name
                                         const rDef = data.recipes?.find(r => r.id === f.recipeId);
-                                        if (rDef) recipeConnect = { connect: { name: rDef.name } }; // Assuming unique names
+                                        if (rDef) {
+                                            // Find the NEW id based on name
+                                            const newId = recipeNameMap.get(rDef.name);
+                                            if (newId) {
+                                                recipeConnect = { connect: { id: newId } };
+                                            }
+                                        }
                                     }
                                     return {
                                         name: f.name,
