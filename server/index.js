@@ -15,7 +15,8 @@ const adminRoutes = require('./routes/admin');
 const path = require('path');
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Determine storage root similar to upload route
 const STORAGE_ROOT = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.STORAGE_ROOT || path.join(__dirname, 'uploads/..');
