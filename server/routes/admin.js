@@ -211,4 +211,43 @@ router.post('/import', async (req, res) => {
     }
 });
 
+// DEBUG: List files to find lost database
+router.get('/debug-files', (req, res) => {
+    const fs = require('fs');
+    const path = require('path');
+
+    let output = "=== DEBUG FILE LISTING ===\n\n";
+
+    const listDir = (dir) => {
+        try {
+            output += `\n--- Directory: ${dir} ---\n`;
+            if (fs.existsSync(dir)) {
+                const files = fs.readdirSync(dir);
+                files.forEach(file => {
+                    const fullPath = path.join(dir, file);
+                    try {
+                        const stats = fs.statSync(fullPath);
+                        output += `${file.padEnd(30)} | Size: ${(stats.size / 1024).toFixed(2)} KB | Date: ${stats.mtime.toISOString()}\n`;
+                    } catch (e) { output += `${file} (Error reading stats)\n`; }
+                });
+            } else {
+                output += "(Directory does not exist)\n";
+            }
+        } catch (err) {
+            output += `Error listing dir: ${err.message}\n`;
+        }
+    };
+
+    listDir('./prisma');
+    listDir('.');
+    listDir('/data');
+    listDir('/app/data'); // Sometimes mounted here
+
+    output += `\n\nENV DATABASE_URL: ${process.env.DATABASE_URL}`;
+    output += `\nENV STORAGE_ROOT: ${process.env.STORAGE_ROOT}`;
+
+    res.set('Content-Type', 'text/plain');
+    res.send(output);
+});
+
 module.exports = router;

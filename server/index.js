@@ -6,6 +6,7 @@ const fs = require('fs');
 
 const prisma = new PrismaClient();
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy (Railway load balancer)
 const PORT = process.env.PORT || 3001;
 
 const logRoutes = require('./routes/log');
