@@ -77,6 +77,9 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             }
         }));
 } else {
+    console.log("DEBUG: Env Check");
+    console.log("GOOGLE_CLIENT_ID present?", !!process.env.GOOGLE_CLIENT_ID);
+    console.log("GOOGLE_CLIENT_SECRET present?", !!process.env.GOOGLE_CLIENT_SECRET);
     console.warn("⚠️ Google Auth credentials missing. Auth will not work.");
 }
 
