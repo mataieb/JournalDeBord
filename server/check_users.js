@@ -10,3 +10,6 @@ async function showUsers() {
 showUsers()
     .catch(e => console.error(e))
     .finally(async () => await prisma.$disconnect());
+
+
+//Comentaoruiae"$oàr qujzeêojktrha îojdszfrgha*
