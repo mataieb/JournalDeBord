@@ -51,6 +51,11 @@
     top: 0;
     z-index: 10;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+    /* Use Flexbox for layout control */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .logo {
@@ -60,6 +65,7 @@
     font-weight: 700;
     font-size: 1.25rem;
     color: var(--text-primary);
+    /* No flex-grow needed if using justify-content: space-between */
 }
 
 .logo .icon {

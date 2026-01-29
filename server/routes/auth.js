@@ -29,7 +29,8 @@ router.get('/logout', (req, res, next) => {
     req.logout((err) => {
         if (err) { return next(err); }
         // Clear cookie if desired (express-session usually handles it via logout())
-        res.redirect('/');
+        const clientUrl = process.env.CLIENT_URL || '/';
+        res.redirect(clientUrl);
     });
 });
 

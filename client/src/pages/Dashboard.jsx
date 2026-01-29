@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config';
 import { Activity, Droplets, Flame, Brain, ChevronLeft, ChevronRight } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+    const { user } = useAuth();
     const [summary, setSummary] = useState({
         calories: 0,
         water: 0,
@@ -22,13 +24,27 @@ const Dashboard = () => {
     const fetchToday = async () => {
         try {
             const today = new Date().toISOString().split('T')[0];
-            const res = await fetch(`${API_BASE_URL}/api/log/${today}`);
+            const res = await fetch(`${API_BASE_URL}/api/log/${today}?timestamp=${new Date().getTime()}`, { credentials: 'include' });
             const data = await res.json();
 
             const calories = data.foods.reduce((acc, item) => acc + (item.calories || 0), 0);
             const water = data.drinks.reduce((acc, item) => acc + (item.volumeMl || 0), 0);
             const exercises = data.exercises.length;
-            const mood = data.gutHealth ? (data.gutHealth.symptoms ? 'Symptômes' : 'Bien') : 'Pas de données';
+
+            // Logic for 'Intestin' card
+            let mood = 'Pas de données';
+            if (data.gutHealth) {
+                // If there are symptoms => Show 'Symptômes'
+                // Else if there is a dailyScore => Show Score/5
+                // Else => 'Bien'
+                if (data.gutHealth.symptoms && data.gutHealth.symptoms !== '{}') {
+                    mood = 'Symptômes';
+                } else if (data.gutHealth.dailyScore) {
+                    mood = `${data.gutHealth.dailyScore}/5`;
+                } else {
+                    mood = 'Bien';
+                }
+            }
 
             setSummary({ calories, water, mood, exercises });
         } catch (err) { console.error(err); }
@@ -38,7 +54,7 @@ const Dashboard = () => {
         try {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth() + 1;
-            const res = await fetch(`${API_BASE_URL}/api/log/month/${year}/${month}`);
+            const res = await fetch(`${API_BASE_URL}/api/log/month/${year}/${month}`, { credentials: 'include' });
             const data = await res.json();
             setMonthData(data);
         } catch (err) { console.error(err); }
@@ -63,9 +79,9 @@ const Dashboard = () => {
                     WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                     marginBottom: '0.5rem'
                 }}>
-                    Bonjour, User
+                    Bienvenue, {user?.name?.split(' ')[0] || 'Voyageur'}
                 </h1>
-                <p style={{ color: 'var(--text-secondary)' }}>Voici votre résumé du jour</p>
+                <p style={{ color: 'var(--text-secondary)' }}>Voici votre résumé mensuel de sommeil et santé intestinale</p>
             </header>
 
             {/* Calendars Row */}

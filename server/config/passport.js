@@ -44,15 +44,31 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                             data: { googleId, avatar }
                         });
                     } else {
-                        // 3. Create new user
-                        user = await prisma.user.create({
-                            data: {
-                                email,
-                                googleId,
-                                name: profile.displayName,
-                                avatar
-                            }
-                        });
+                        // SPECIAL MIGRATION FOR FIRST USER
+                        // If User ID 1 exists (the usage during dev) and has a generic email, we claim it.
+                        const legacyUser = await prisma.user.findUnique({ where: { id: 1 } });
+                        if (legacyUser && (legacyUser.email === 'user@example.com' || legacyUser.email === 'default@example.com') && !legacyUser.googleId) {
+                            console.log("MIGRATION: Linking legacy User 1 to new Google Account");
+                            user = await prisma.user.update({
+                                where: { id: 1 },
+                                data: {
+                                    email, // Update to real Google email
+                                    googleId,
+                                    name: profile.displayName,
+                                    avatar
+                                }
+                            });
+                        } else {
+                            // 3. Create new user
+                            user = await prisma.user.create({
+                                data: {
+                                    email,
+                                    googleId,
+                                    name: profile.displayName,
+                                    avatar
+                                }
+                            });
+                        }
                     }
                 }
                 return done(null, user);

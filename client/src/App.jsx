@@ -29,10 +29,10 @@ const Layout = () => {
             <header className="app-header">
                 <div className="logo">
                     <Activity className="icon" />
-                    <span>HealthTracker</span>
+                    <span>Journal de bord</span>
                 </div>
                 {user && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
                         {user.avatar ?
                             <img src={user.avatar} alt="avatar" style={{ width: 32, height: 32, borderRadius: '50%' }} />
                             : <span style={{ fontSize: '0.8rem' }}>{user.name}</span>
