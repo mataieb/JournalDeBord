@@ -250,4 +250,14 @@ router.get('/debug-files', (req, res) => {
     res.send(output);
 });
 
+// DEBUG: Download the suspicious backup file
+router.get('/download-backup', (req, res) => {
+    const file = path.join(__dirname, '../prisma/dev.db.pre_nested_backup');
+    if (fs.existsSync(file)) {
+        res.download(file, 'restored_backup.db');
+    } else {
+        res.status(404).send('Backup file not found');
+    }
+});
+
 module.exports = router;
