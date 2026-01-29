@@ -18,7 +18,7 @@ const path = require('path');
 
 const passport = require('./config/passport');
 const session = require('express-session');
-const SQLiteStore = require('connect-sqlite3')(session);
+// const SQLiteStore = require('connect-sqlite3')(session); // Removed for Postgres
 const authRoutes = require('./routes/auth');
 
 // Allow credentials for CORS (cookies)
@@ -34,10 +34,19 @@ const STORAGE_ROOT = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.STORAG
 const uploadDir = path.join(STORAGE_ROOT, 'uploads');
 
 // Session Setup
+// Session Setup (PostgreSQL)
+const pgSession = require('connect-pg-simple')(session);
+const { Pool } = require('pg');
+
+const pgPool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+});
+
 app.use(session({
-    store: new SQLiteStore({
-        db: 'sessions.db',
-        dir: STORAGE_ROOT // Store sessions in persistent volume
+    store: new pgSession({
+        pool: pgPool,
+        tableName: 'session',
+        createTableIfMissing: true
     }),
     secret: process.env.SESSION_SECRET || 'super_secret_health_key',
     resave: false,
