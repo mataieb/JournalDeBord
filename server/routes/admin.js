@@ -241,6 +241,7 @@ router.get('/debug-files', (req, res) => {
     listDir('./prisma');
     listDir('.');
     listDir('/data');
+    listDir('/data/uploads'); // Check inside uploads
     listDir('/app/data'); // Sometimes mounted here
 
     output += `\n\nENV DATABASE_URL: ${process.env.DATABASE_URL}`;
