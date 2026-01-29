@@ -18,13 +18,20 @@ const asyncHandler = (fn) => (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-// Middleware to ensure User 1 exists (MVP simulation)
+// Middleware to ensure User authentication
 const ensureUser = async (req, res, next) => {
+    if (req.isAuthenticated() && req.user) {
+        req.userId = req.user.id;
+        return next();
+    }
+
+    // Fallback for development / legacy default user (User ID 1)
+    // TODO: Remove this fallback once Auth is fully implemented on frontend
     const userId = 1;
     let user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
         user = await prisma.user.create({
-            data: { id: userId, email: 'user@example.com', name: 'User' }
+            data: { id: userId, email: 'default@example.com', name: 'Default User' }
         });
     }
     req.userId = userId;

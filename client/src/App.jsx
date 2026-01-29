@@ -1,6 +1,7 @@
 import React from 'react'
-import { createBrowserRouter, RouterProvider, Outlet, NavLink } from 'react-router-dom'
-import { Activity, Calendar, PieChart, Home, Utensils } from 'lucide-react'
+import { createBrowserRouter, RouterProvider, Outlet, NavLink, Navigate } from 'react-router-dom'
+import { Activity, Calendar, PieChart, Home, Utensils, LogOut } from 'lucide-react'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import './index.css'
 
 import Journal from './pages/Journal'
@@ -8,10 +9,21 @@ import Dashboard from './pages/Dashboard'
 import Analysis from './pages/Analysis'
 import Recipes from './pages/Recipes'
 import Ingredients from './pages/Ingredients'
+import Login from './pages/Login'
 
-// Placeholder Pages
+// Protected Route Wrapper
+const ProtectedRoute = ({ children }) => {
+    const { user, loading } = useAuth();
+
+    if (loading) return <div className="loading-screen">Chargement...</div>;
+    if (!user) return <Navigate to="/login" replace />;
+
+    return children;
+};
 
 const Layout = () => {
+    const { user, logout } = useAuth();
+
     return (
         <div className="app-container">
             <header className="app-header">
@@ -19,6 +31,17 @@ const Layout = () => {
                     <Activity className="icon" />
                     <span>HealthTracker</span>
                 </div>
+                {user && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        {user.avatar ?
+                            <img src={user.avatar} alt="avatar" style={{ width: 32, height: 32, borderRadius: '50%' }} />
+                            : <span style={{ fontSize: '0.8rem' }}>{user.name}</span>
+                        }
+                        <button onClick={logout} className="btn-icon" style={{ color: 'var(--text-muted)' }}>
+                            <LogOut size={20} />
+                        </button>
+                    </div>
+                )}
             </header>
 
             <main className="app-main">
@@ -49,8 +72,12 @@ const Layout = () => {
 
 const router = createBrowserRouter([
     {
+        path: "/login",
+        element: <Login />
+    },
+    {
         path: "/",
-        element: <Layout />,
+        element: <ProtectedRoute><Layout /></ProtectedRoute>,
         children: [
             { path: "/", element: <Dashboard /> },
             { path: "/journal", element: <Journal /> },
@@ -63,7 +90,9 @@ const router = createBrowserRouter([
 
 function App() {
     return (
-        <RouterProvider router={router} />
+        <AuthProvider>
+            <RouterProvider router={router} />
+        </AuthProvider>
     )
 }
 

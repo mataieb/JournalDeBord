@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
@@ -14,7 +15,16 @@ const uploadRoutes = require('./routes/upload');
 const adminRoutes = require('./routes/admin');
 const path = require('path');
 
-app.use(cors());
+const passport = require('./config/passport');
+const session = require('express-session');
+const SQLiteStore = require('connect-sqlite3')(session);
+const authRoutes = require('./routes/auth');
+
+// Allow credentials for CORS (cookies)
+app.use(cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173", // URL of frontend in dev
+    credentials: true
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -22,8 +32,28 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 const STORAGE_ROOT = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.STORAGE_ROOT || path.join(__dirname, 'uploads/..');
 const uploadDir = path.join(STORAGE_ROOT, 'uploads');
 
+// Session Setup
+app.use(session({
+    store: new SQLiteStore({
+        db: 'sessions.db',
+        dir: STORAGE_ROOT // Store sessions in persistent volume
+    }),
+    secret: process.env.SESSION_SECRET || 'super_secret_health_key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production', // true if https
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    }
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Serve static files from 'uploads' directory
 app.use('/uploads', express.static(uploadDir));
+
+app.use('/auth', authRoutes);
 
 app.use('/api/log', logRoutes);
 app.use('/api/recipes', recipeRoutes);
