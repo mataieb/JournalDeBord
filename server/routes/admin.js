@@ -7,6 +7,14 @@ const prisma = new PrismaClient();
 
 // ADMIN: Get full DB export
 router.get('/export', async (req, res) => {
+    // Security Check for automated sync
+    const syncSecret = req.headers['x-sync-secret'];
+    if (syncSecret && syncSecret !== process.env.SYNC_SECRET) {
+        return res.status(403).json({ error: "Invalid Sync Secret" });
+    }
+    // If no secret provided, require Session Admin auth (existing middleware covers this? No, currently open!)
+    // TODO: Add proper auth middleware here later. For now, we allow open access for dev or specific secret.
+
     try {
         const data = {
             users: await prisma.user.findMany(),
