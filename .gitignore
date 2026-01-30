@@ -28,3 +28,7 @@ yarn-error.log*
 *.db
 uploads/*
 !uploads/.keep
+
+# Backups
+server/prod_backup_*.json
+server/backups/

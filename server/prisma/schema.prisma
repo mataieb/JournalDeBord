@@ -165,7 +165,14 @@ model Ingredient {
   description String?
   type        Int?     // Match Java Enum
   uniteMesure String?
-  calories    Int?     @default(0)
+  category    String?  // "Légume", "Viande", "Féculent", etc.
+  
+  // Nutrition pour 100g (ou par unité si uniteMesure='pièce')
+  calories    Int?     @default(0) // Kcal
+  protein     Float?   @default(0) // g
+  carbs       Float?   @default(0) // g
+  fat         Float?   @default(0) // g
+  
   saison      Int?     
   
   recipeIngredients RecipeIngredient[]

@@ -151,8 +151,10 @@ const Ingredients = () => {
                                     {selectedIds.length > 0 && <Check size={16} />}
                                 </th>
                                 <th style={{ padding: '15px', textAlign: 'left' }}>Nom</th>
+                                <th style={{ padding: '15px', textAlign: 'center' }}>Saison</th>
                                 <th style={{ padding: '15px', textAlign: 'left' }}>Unités possibles</th>
                                 <th style={{ padding: '15px', textAlign: 'center' }}>Utilisation</th>
+                                <th style={{ padding: '15px', textAlign: 'left' }}>Prot (g)</th>
                                 <th style={{ padding: '15px', textAlign: 'left' }}>Calories (kCal)</th>
                                 <th style={{ padding: '15px', textAlign: 'right' }}>Actions</th>
                             </tr>
@@ -177,6 +179,23 @@ const Ingredients = () => {
                                             />
                                         ) : (
                                             <span style={{ fontWeight: '500' }}>{ing.name}</span>
+                                        )}
+                                    </td>
+                                    <td style={{ padding: '15px', textAlign: 'center' }}>
+                                        {editingId === ing.id ? (
+                                            <input
+                                                className="input"
+                                                type="number"
+                                                min="1" max="12"
+                                                style={{ width: '60px' }}
+                                                value={editForm.saison || ''}
+                                                placeholder="1-12"
+                                                onChange={e => setEditForm({ ...editForm, saison: parseInt(e.target.value) || null })}
+                                            />
+                                        ) : (
+                                            <span style={{ fontSize: '0.9rem', color: ing.saison ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                                                {ing.saison ? ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'][ing.saison - 1] : '∞'}
+                                            </span>
                                         )}
                                     </td>
                                     <td style={{ padding: '15px' }}>
@@ -226,6 +245,19 @@ const Ingredients = () => {
                                             </span>
                                         ) : (
                                             <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>-</span>
+                                        )}
+                                    </td>
+                                    <td style={{ padding: '15px' }}>
+                                        {editingId === ing.id ? (
+                                            <input
+                                                className="input"
+                                                type="number"
+                                                style={{ width: '80px' }}
+                                                value={editForm.protein || ''}
+                                                onChange={e => setEditForm({ ...editForm, protein: parseFloat(e.target.value) })}
+                                            />
+                                        ) : (
+                                            <span>{ing.protein || '-'}</span>
                                         )}
                                     </td>
                                     <td style={{ padding: '15px' }}>
