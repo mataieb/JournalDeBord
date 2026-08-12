@@ -1,0 +1,10 @@
+{
+  "buildCommand": "cd client && npm install && npm run build && cd ../server && npm install && npx prisma generate && npx prisma migrate deploy",
+  "outputDirectory": "client/dist",
+  "installCommand": "echo 'root install skipped, handled by buildCommand'",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index" },
+    { "source": "/auth/(.*)", "destination": "/api/index" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

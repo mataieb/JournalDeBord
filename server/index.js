@@ -6,7 +6,7 @@ const fs = require('fs');
 
 const prisma = new PrismaClient();
 const app = express();
-app.set('trust proxy', 1); // Trust first proxy (Railway load balancer)
+app.set('trust proxy', 1); // Trust first proxy (Vercel / load balancer)
 const PORT = process.env.PORT || 3001;
 
 const logRoutes = require('./routes/log');
@@ -18,7 +18,6 @@ const path = require('path');
 
 const passport = require('./config/passport');
 const session = require('express-session');
-// const SQLiteStore = require('connect-sqlite3')(session); // Removed for Postgres
 const authRoutes = require('./routes/auth');
 
 // Allow credentials for CORS (cookies)
@@ -28,10 +27,6 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
-// Determine storage root similar to upload route
-const STORAGE_ROOT = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.STORAGE_ROOT || path.join(__dirname, 'uploads/..');
-const uploadDir = path.join(STORAGE_ROOT, 'uploads');
 
 // Session Setup
 // Session Setup (PostgreSQL)
@@ -59,9 +54,6 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
-
-// Serve static files from 'uploads' directory
-app.use('/uploads', express.static(uploadDir));
 
 app.use('/auth', authRoutes);
 
@@ -92,7 +84,12 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
+// Vercel imports this module as a serverless function handler instead of
+// running a persistent process, so only listen when running standalone (local/Docker).
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;

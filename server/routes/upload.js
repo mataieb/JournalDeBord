@@ -2,33 +2,12 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const { put } = require('@vercel/blob');
 
-// Use environment variable for upload dir, or default to local folder
-// In production with 1 volume at /data, we should put uploads in /data/uploads
-const STORAGE_ROOT = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.STORAGE_ROOT || path.join(__dirname, '../');
-const uploadDir = path.join(STORAGE_ROOT, 'uploads');
-
-// Ensure uploads directory exists
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Configure storage
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        // Create unique filename: timestamp-random.ext
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
+// Files are buffered in memory then pushed to Vercel Blob (no persistent local disk on Vercel).
 const upload = multer({
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 4 * 1024 * 1024 }, // Vercel serverless functions cap request bodies around 4.5MB
     fileFilter: (req, file, cb) => {
         const filetypes = /jpeg|jpg|png|webp|gif/;
         const mintype = filetypes.test(file.mimetype);
@@ -41,15 +20,24 @@ const upload = multer({
 });
 
 // POST endpoint
-router.post('/', upload.single('file'), (req, res) => {
+router.post('/', upload.single('file'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
     }
-    // Return the URL to access the file
-    // Ideally, this should be a full URL if on cloud, or relative if local.
-    // For local dev/VPS:
-    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-    res.json({ url: fileUrl });
+
+    try {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const filename = `uploads/${uniqueSuffix}${path.extname(req.file.originalname)}`;
+
+        const blob = await put(filename, req.file.buffer, {
+            access: 'public',
+            contentType: req.file.mimetype,
+        });
+
+        res.json({ url: blob.url });
+    } catch (e) {
+        res.status(500).json({ message: 'Upload failed', error: e.message });
+    }
 });
 
 module.exports = router;

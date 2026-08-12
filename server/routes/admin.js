@@ -248,12 +248,9 @@ router.get('/debug-files', (req, res) => {
 
     listDir('./prisma');
     listDir('.');
-    listDir('/data');
-    listDir('/data/uploads'); // Check inside uploads
-    listDir('/app/data'); // Sometimes mounted here
 
-    output += `\n\nENV DATABASE_URL: ${process.env.DATABASE_URL}`;
-    output += `\nENV STORAGE_ROOT: ${process.env.STORAGE_ROOT}`;
+    output += `\n\nENV DATABASE_URL: ${process.env.DATABASE_URL ? '(set)' : '(missing)'}`;
+    output += `\nENV VERCEL: ${process.env.VERCEL || '(not on Vercel)'}`;
 
     res.set('Content-Type', 'text/plain');
     res.send(output);

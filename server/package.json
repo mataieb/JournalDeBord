@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "npx prisma db push --accept-data-loss && node index.js",
+    "start": "node index.js",
     "dev": "nodemon index.js",
+    "postinstall": "prisma generate",
+    "migrate:deploy": "prisma migrate deploy",
     "backup": "node backup_db.js",
     "migrate": "npm run backup && npx prisma migrate dev",
     "sync-prod": "node sync_prod.js",
+    "migrate-uploads-to-blob": "node scripts/migrate_uploads_to_blob.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -16,8 +19,8 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.19.1",
+    "@vercel/blob": "^0.27.1",
     "connect-pg-simple": "^10.0.0",
-    "connect-sqlite3": "^0.9.16",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
