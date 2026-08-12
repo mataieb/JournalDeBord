@@ -1,20 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// ADMIN: Get full DB export
-router.get('/export', async (req, res) => {
-    // Security Check for automated sync
+// Requires an exact x-sync-secret match. No fallback: a missing/wrong secret is always rejected.
+const requireSyncSecret = (req, res, next) => {
     const syncSecret = req.headers['x-sync-secret'];
-    if (syncSecret && syncSecret !== process.env.SYNC_SECRET) {
-        return res.status(403).json({ error: "Invalid Sync Secret" });
+    if (!process.env.SYNC_SECRET || syncSecret !== process.env.SYNC_SECRET) {
+        return res.status(401).json({ error: "Invalid or missing Sync Secret" });
     }
-    // If no secret provided, require Session Admin auth (existing middleware covers this? No, currently open!)
-    // TODO: Add proper auth middleware here later. For now, we allow open access for dev or specific secret.
+    next();
+};
 
+// ADMIN: Get full DB export
+router.get('/export', requireSyncSecret, async (req, res) => {
     try {
         const data = {
             users: await prisma.user.findMany(),
@@ -40,7 +39,7 @@ router.get('/export', async (req, res) => {
 });
 
 // ADMIN: Import full DB (This is destructive/additive)
-router.post('/import', async (req, res) => {
+router.post('/import', requireSyncSecret, async (req, res) => {
     const data = req.body;
     if (!data || !data.recipes) return res.status(400).json({ message: "Invalid data" });
 
@@ -216,53 +215,6 @@ router.post('/import', async (req, res) => {
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: e.message });
-    }
-});
-
-// DEBUG: List files to find lost database
-router.get('/debug-files', (req, res) => {
-    const fs = require('fs');
-    const path = require('path');
-
-    let output = "=== DEBUG FILE LISTING ===\n\n";
-
-    const listDir = (dir) => {
-        try {
-            output += `\n--- Directory: ${dir} ---\n`;
-            if (fs.existsSync(dir)) {
-                const files = fs.readdirSync(dir);
-                files.forEach(file => {
-                    const fullPath = path.join(dir, file);
-                    try {
-                        const stats = fs.statSync(fullPath);
-                        output += `${file.padEnd(30)} | Size: ${(stats.size / 1024).toFixed(2)} KB | Date: ${stats.mtime.toISOString()}\n`;
-                    } catch (e) { output += `${file} (Error reading stats)\n`; }
-                });
-            } else {
-                output += "(Directory does not exist)\n";
-            }
-        } catch (err) {
-            output += `Error listing dir: ${err.message}\n`;
-        }
-    };
-
-    listDir('./prisma');
-    listDir('.');
-
-    output += `\n\nENV DATABASE_URL: ${process.env.DATABASE_URL ? '(set)' : '(missing)'}`;
-    output += `\nENV VERCEL: ${process.env.VERCEL || '(not on Vercel)'}`;
-
-    res.set('Content-Type', 'text/plain');
-    res.send(output);
-});
-
-// DEBUG: Download the suspicious backup file
-router.get('/download-backup', (req, res) => {
-    const file = path.join(__dirname, '../prisma/dev.db.pre_nested_backup');
-    if (fs.existsSync(file)) {
-        res.download(file, 'restored_backup.db');
-    } else {
-        res.status(404).send('Backup file not found');
     }
 });
 

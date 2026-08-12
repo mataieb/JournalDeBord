@@ -18,6 +18,7 @@ const path = require('path');
 
 const passport = require('./config/passport');
 const session = require('express-session');
+const rateLimit = require('express-rate-limit');
 const authRoutes = require('./routes/auth');
 
 // Allow credentials for CORS (cookies)
@@ -54,6 +55,15 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Best-effort rate limit (per-instance on serverless, still deters casual abuse/scraping)
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use(['/api', '/auth'], apiLimiter);
 
 app.use('/auth', authRoutes);
 

@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
+const { requireAuth } = require('../middleware/auth');
 
 const prisma = new PrismaClient();
+
+router.use(requireAuth);
 
 // Helper to get start/end of day
 const getDayRange = (dateStr) => {
@@ -18,29 +21,28 @@ const asyncHandler = (fn) => (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-// Middleware to ensure User authentication
-const ensureUser = async (req, res, next) => {
-    if (req.isAuthenticated() && req.user) {
-        req.userId = req.user.id;
-        return next();
-    }
+// Ensures the given item belongs (via its dayLog) to the authenticated user.
+// model must expose a `dayLog` relation directly (FoodItem, DrinkItem, HabitItem, Exercise).
+const assertOwnsDayLogItem = async (model, id, req) => {
+    const item = await model.findUnique({
+        where: { id: parseInt(id) },
+        select: { id: true, dayLog: { select: { userId: true } } }
+    });
+    return !!item && item.dayLog.userId === req.userId;
+};
 
-    // Fallback for development / legacy default user (User ID 1)
-    // TODO: Remove this fallback once Auth is fully implemented on frontend
-    const userId = 1;
-    let user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-        user = await prisma.user.create({
-            data: { id: userId, email: 'default@example.com', name: 'Default User' }
-        });
-    }
-    req.userId = userId;
-    next();
+// StoolEntry -> GutHealth -> DayLog, one hop deeper than the other items.
+const assertOwnsStool = async (id, req) => {
+    const item = await prisma.stoolEntry.findUnique({
+        where: { id: parseInt(id) },
+        select: { id: true, gutHealth: { select: { dayLog: { select: { userId: true } } } } }
+    });
+    return !!item && item.gutHealth.dayLog.userId === req.userId;
 };
 
 
 // GET /api/log/:date (YYYY-MM-DD or today)
-router.get('/:date', ensureUser, asyncHandler(async (req, res) => {
+router.get('/:date', asyncHandler(async (req, res) => {
     const { date } = req.params;
     const { start, end } = getDayRange(date);
 
@@ -67,7 +69,7 @@ router.get('/:date', ensureUser, asyncHandler(async (req, res) => {
 }));
 
 // GET /api/log/month/:year/:month
-router.get('/month/:year/:month', ensureUser, asyncHandler(async (req, res) => {
+router.get('/month/:year/:month', asyncHandler(async (req, res) => {
     const { year, month } = req.params;
 
     const start = new Date(parseInt(year), parseInt(month) - 1, 1);
@@ -95,7 +97,7 @@ router.get('/month/:year/:month', ensureUser, asyncHandler(async (req, res) => {
 }));
 
 // POST /api/log/item
-router.post('/item', ensureUser, asyncHandler(async (req, res) => {
+router.post('/item', asyncHandler(async (req, res) => {
     const { type, data, date } = req.body;
     const { start, end } = getDayRange(date);
 
@@ -197,6 +199,7 @@ router.post('/item', ensureUser, asyncHandler(async (req, res) => {
 // PUT /api/log/stool/:id
 router.put('/stool/:id', asyncHandler(async (req, res) => {
     const { id } = req.params;
+    if (!(await assertOwnsStool(id, req))) return res.status(404).json({ message: 'Not found' });
     const { bristolType, notes, time } = req.body;
 
     const result = await prisma.stoolEntry.update({
@@ -213,6 +216,7 @@ router.put('/stool/:id', asyncHandler(async (req, res) => {
 // DELETE /api/log/stool/:id
 router.delete('/stool/:id', asyncHandler(async (req, res) => {
     const { id } = req.params;
+    if (!(await assertOwnsStool(id, req))) return res.status(404).json({ message: 'Not found' });
     await prisma.stoolEntry.delete({
         where: { id: parseInt(id) }
     });
@@ -222,6 +226,7 @@ router.delete('/stool/:id', asyncHandler(async (req, res) => {
 // FOOD Routes
 router.put('/food/:id', asyncHandler(async (req, res) => {
     const { id } = req.params;
+    if (!(await assertOwnsDayLogItem(prisma.foodItem, id, req))) return res.status(404).json({ message: 'Not found' });
     const { name, category, calories, quantity, time } = req.body;
     const result = await prisma.foodItem.update({
         where: { id: parseInt(id) },
@@ -236,6 +241,7 @@ router.put('/food/:id', asyncHandler(async (req, res) => {
 
 router.delete('/food/:id', asyncHandler(async (req, res) => {
     const { id } = req.params;
+    if (!(await assertOwnsDayLogItem(prisma.foodItem, id, req))) return res.status(404).json({ message: 'Not found' });
     await prisma.foodItem.delete({ where: { id: parseInt(id) } });
     res.json({ success: true });
 }));
@@ -243,6 +249,7 @@ router.delete('/food/:id', asyncHandler(async (req, res) => {
 // DRINK Routes
 router.put('/drink/:id', asyncHandler(async (req, res) => {
     const { id } = req.params;
+    if (!(await assertOwnsDayLogItem(prisma.drinkItem, id, req))) return res.status(404).json({ message: 'Not found' });
     const { name, type, period, volumeMl, time } = req.body;
     const result = await prisma.drinkItem.update({
         where: { id: parseInt(id) },
@@ -257,6 +264,7 @@ router.put('/drink/:id', asyncHandler(async (req, res) => {
 
 router.delete('/drink/:id', asyncHandler(async (req, res) => {
     const { id } = req.params;
+    if (!(await assertOwnsDayLogItem(prisma.drinkItem, id, req))) return res.status(404).json({ message: 'Not found' });
     await prisma.drinkItem.delete({ where: { id: parseInt(id) } });
     res.json({ success: true });
 }));
@@ -264,6 +272,7 @@ router.delete('/drink/:id', asyncHandler(async (req, res) => {
 // EXERCISE Routes
 router.put('/exercise/:id', asyncHandler(async (req, res) => {
     const { id } = req.params;
+    if (!(await assertOwnsDayLogItem(prisma.exercise, id, req))) return res.status(404).json({ message: 'Not found' });
     const { name, type, durationMin } = req.body;
     const result = await prisma.exercise.update({
         where: { id: parseInt(id) },
@@ -277,6 +286,7 @@ router.put('/exercise/:id', asyncHandler(async (req, res) => {
 
 router.delete('/exercise/:id', asyncHandler(async (req, res) => {
     const { id } = req.params;
+    if (!(await assertOwnsDayLogItem(prisma.exercise, id, req))) return res.status(404).json({ message: 'Not found' });
     await prisma.exercise.delete({ where: { id: parseInt(id) } });
     res.json({ success: true });
 }));
@@ -284,6 +294,7 @@ router.delete('/exercise/:id', asyncHandler(async (req, res) => {
 // HABIT Routes
 router.put('/habit/:id', asyncHandler(async (req, res) => {
     const { id } = req.params;
+    if (!(await assertOwnsDayLogItem(prisma.habitItem, id, req))) return res.status(404).json({ message: 'Not found' });
     const { name, category, quantity } = req.body;
     const result = await prisma.habitItem.update({
         where: { id: parseInt(id) },
@@ -297,6 +308,7 @@ router.put('/habit/:id', asyncHandler(async (req, res) => {
 
 router.delete('/habit/:id', asyncHandler(async (req, res) => {
     const { id } = req.params;
+    if (!(await assertOwnsDayLogItem(prisma.habitItem, id, req))) return res.status(404).json({ message: 'Not found' });
     await prisma.habitItem.delete({ where: { id: parseInt(id) } });
     res.json({ success: true });
 }));

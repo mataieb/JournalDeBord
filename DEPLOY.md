@@ -28,6 +28,10 @@ de le lancer :
 cd server
 DATABASE_URL="<pooled-neon>" SYNC_SECRET="<ta valeur actuelle>" npm run sync-prod
 ```
+`npm run sync-prod` enchaîne automatiquement avec `fix-sequences` : comme les lignes sont
+réimportées avec leurs `id` d'origine, les séquences `SERIAL` de Postgres doivent être
+recalées sinon la prochaine création via l'app peut percuter un id déjà utilisé.
+
 Vérifie ensuite les données dans Neon (via leur SQL editor ou `npx prisma studio`).
 
 ## 3. Créer le projet Vercel

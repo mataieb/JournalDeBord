@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const { put } = require('@vercel/blob');
+const { requireAuth } = require('../middleware/auth');
 
 // Files are buffered in memory then pushed to Vercel Blob (no persistent local disk on Vercel).
 const upload = multer({
@@ -20,7 +21,7 @@ const upload = multer({
 });
 
 // POST endpoint
-router.post('/', upload.single('file'), async (req, res) => {
+router.post('/', requireAuth, upload.single('file'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
     }
